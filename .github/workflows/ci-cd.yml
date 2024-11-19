@@ -12,6 +12,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: paps2201
+          MYSQL_DATABASE: cms
+        ports:
+          - 3306:3306
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -29,6 +38,19 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Wait for MySQL to be ready
+        run: |
+          until mysql -h 127.0.0.1 -u root -ppaps2201 -e "SELECT 1"; do
+            echo "Waiting for MySQL to be ready..."
+            sleep 5
+          done
+
+      - name: Set Database Environment Variables
+        run: |
+          echo "DB_URL=jdbc:mysql://localhost:3306/cms" >> $GITHUB_ENV
+          echo "DB_USER=root" >> $GITHUB_ENV
+          echo "DB_PASSWORD=paps2201" >> $GITHUB_ENV
 
       - name: Install Dependencies
         run: mvn install
